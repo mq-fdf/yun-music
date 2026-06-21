@@ -1,4 +1,4 @@
-import { mockPlaylists, mockSongs, mockLyric } from '@/utils/mockData'
+import { mockPlaylists, mockSongs } from '@/utils/mockData'
 
 // 模拟延迟，模拟网络请求
 const mockDelay = (ms = 500) => {

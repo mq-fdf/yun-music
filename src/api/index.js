@@ -7,7 +7,6 @@ const request = axios.create({
 
 request.interceptors.request.use(
   config => {
-    // Add token or other headers here
     return config
   },
   error => {
