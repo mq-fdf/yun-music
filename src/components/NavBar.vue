@@ -2,7 +2,7 @@
   <nav class="nav-bar">
     <div class="logo" @click="$router.push('/')">
       <img src="@/assets/vue.svg" alt="logo" />
-      <span>云音乐</span>
+      <span>云听音乐</span>
     </div>
     <div class="nav-links">
       <router-link to="/">首页</router-link>

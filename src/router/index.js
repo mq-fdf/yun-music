@@ -39,7 +39,7 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  document.title = to.meta.title ? `${to.meta.title} - 云音乐` : '云音乐'
+  document.title = to.meta.title ? `${to.meta.title} - 云听音乐` : '云听音乐'
   
   // Basic auth guard example
   const isLogin = !!localStorage.getItem('token')
