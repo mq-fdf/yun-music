@@ -107,14 +107,14 @@ watch(() => props.currentTime, (time) => {
   position: relative;
 
   @media (max-width: 768px) {
-    height: 200px; /* Reduced height for mobile */
+    height: 200px;
     --lyric-line-height: 25px;
   }
 
   .lyric-wrapper {
     transition: transform 0.3s ease-out;
     p {
-      height: var(--lyric-line-height, 30px); /* Use CSS variable for line height */
+      height: var(--lyric-line-height, 30px);
       line-height: var(--lyric-line-height, 30px);
       margin: 0;
       color: rgba(255,255,255,0.6);

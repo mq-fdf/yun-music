@@ -221,16 +221,14 @@ watch(() => playerStore.isPlaying, async (newVal) => {
       // 这里的 nextTick 是为了确保 Vue 已经更新了 DOM
       // 在移动端，有时 src 更新后立即 play 可能会失败，给它一点时间
       await nextTick();
-      try {
         await audioRef.value.play();
       } catch (error) {
         console.error('watch playerStore.isPlaying: 尝试播放音乐失败', error);
-        // 如果是用户点击播放按钮，但浏览器阻止了自动播放，则提示用户
-        // 否则，如果是歌曲切换导致的自动播放失败，静默处理或者给出更柔和的提示
-        ElMessage.error('播放失败，浏览器可能阻止了自动播放。请尝试再次点击播放。');
-        playerStore.setPlaying(false); // 失败后将状态设为暂停
-      }
-    } else {
+        if (error.name !== 'AbortError') { // 仅当非 AbortError 时才设置播放状态为暂停
+          ElMessage.error('播放失败，浏览器可能阻止了自动播放。请尝试再次点击播放。');
+          playerStore.setPlaying(false); // 失败后将状态设为暂停
+        }
+      } else {
       audioRef.value.pause();
     }
   }
