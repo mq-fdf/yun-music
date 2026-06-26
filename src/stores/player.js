@@ -25,7 +25,6 @@ export const usePlayerStore = defineStore('player', {
       this.playlist = [...songs]
       this.currentIndex = 0
       this.currentSong = this.playlist[0]
-      this.isPlaying = true
     },
     // 添加单曲到列表（不立即播放）
     addToPlaylist(song) {
