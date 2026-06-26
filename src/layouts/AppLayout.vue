@@ -1,6 +1,6 @@
 <template>
   <div class="app-layout">
-    <header class="app-header">
+    <header class="app-header" v-if="!route.meta.hideNavbar">
       <NavBar />
     </header>
     
@@ -12,7 +12,7 @@
       </router-view>
     </main>
 
-    <footer class="app-footer">
+    <footer class="app-footer" v-if="!route.meta.hidePlayer">
       <Player />
     </footer>
 
@@ -24,10 +24,10 @@ import { computed } from 'vue'
 import NavBar from '@/components/NavBar.vue'
 import Player from '@/components/Player.vue'
 import { usePlayerStore } from '@/stores/player'
-import { useRouter } from 'vue-router'
+import { useRoute } from 'vue-router' // 引入 useRoute
 
 const playerStore = usePlayerStore()
-const router = useRouter() // 使用 router
+const route = useRoute() // 初始化 useRoute
 
 const mainPaddingBottom = computed(() => {
   return playerStore.isCollapsed ? '40px' : '80px'

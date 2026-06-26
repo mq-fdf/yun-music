@@ -14,14 +14,9 @@ const isMobile = () => {
 const app = createApp(App)
 const pinia = createPinia()
 
-// 如果是移动端，则显示提示信息
+// 如果是移动端，则直接跳转到移动端提示页面
 if (isMobile()) {
-  ElMessage({
-    message: '检测到您正在使用移动设备，请使用电脑打开以获得更好的体验。',
-    type: 'warning',
-    duration: 0, // 永久显示，直到用户关闭
-    showClose: true
-  });
+  router.push('/mobile-warning'); // 跳转到移动端提示页面
 }
 
 app.use(pinia)

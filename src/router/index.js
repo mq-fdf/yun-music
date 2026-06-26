@@ -30,6 +30,12 @@ const routes = [
     component: () => import('@/views/SongDetail.vue'),
     meta: { title: '歌曲详情' }
   },
+  {
+    path: '/mobile-warning',
+    name: 'MobileWarning',
+    component: () => import('@/views/MobileWarning.vue'),
+    meta: { title: '移动设备提示', hideNavbar: true, hidePlayer: true } // 添加 meta 字段，方便布局组件判断是否隐藏导航栏和播放器
+  },
   // 匹配所有未定义的路由，重定向到首页
   {
     path: '/:pathMatch(.*)*',
