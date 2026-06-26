@@ -14,7 +14,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="封面图" width="120" align="center">
+      <el-table-column label="封面图" width="120" align="center" class-name="hidden-xs-only">
         <template #default="scope">
           <img :src="scope.row.coverImgUrl || scope.row.al?.picUrl" alt="" class="song-cover" />
         </template>
@@ -28,7 +28,7 @@
         </template>
       </el-table-column>
       
-      <el-table-column label="专辑" width="200" show-overflow-tooltip>
+      <el-table-column label="专辑" width="200" show-overflow-tooltip class-name="hidden-xs-only">
         <template #default="scope">
           {{ scope.row.album }}
         </template>
@@ -40,7 +40,7 @@
         </template>
       </el-table-column>
       
-      <el-table-column label="操作" width="80" align="center">
+      <el-table-column label="操作" width="80">
         <template #default="scope">
           <el-button 
             v-if="!isSongInPlaylist(scope.row)"

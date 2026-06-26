@@ -5,7 +5,7 @@
         style="height: 50px; width: 100%;"
         v-model="keywords"
         :fetch-suggestions="querySearchAsync"
-        placeholder="搜索音乐、歌手"
+        placeholder="搜索音乐、歌手(由于数据是mock数据，所有结果可能为空)"
         clearable
         @select="handleSelect"
         @keyup.enter="handleSearch"

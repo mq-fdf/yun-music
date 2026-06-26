@@ -25,6 +25,10 @@ import ThemeSelector from './ThemeSelector.vue'
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
+
+  @media (max-width: 768px) {
+    padding: 0 10px;
+  }
   height: 60px;
   background-color: var(--theme-primary);
   color: #fff;
@@ -47,12 +51,21 @@ import ThemeSelector from './ThemeSelector.vue'
     display: flex;
     align-items: center;
     gap: 20px;
+
+    @media (max-width: 768px) {
+      gap: 10px;
+    }
     
     .nav-links {
       a {
         color: #fff;
         text-decoration: none;
         margin-left: 20px;
+
+        @media (max-width: 768px) {
+          margin-left: 10px;
+          font-size: 13px;
+        }
         &.router-link-active {
           font-weight: bold;
           text-decoration: underline;

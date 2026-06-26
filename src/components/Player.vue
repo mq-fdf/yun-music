@@ -191,11 +191,23 @@ watch(() => playerStore.isPlaying, async (newVal) => {
   z-index: 100;
   color: var(--theme-text);
 
+  @media (max-width: 768px) {
+    height: 150px;
+    padding: 0 50px;
+  }
+
   .player-content {
     display: flex;
     align-items: center;
     width: 100%;
     height: 100%;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      justify-content: center;
+      padding-top: 5px;
+      gap: 5px;
+    }
   }
 
   .song-info {
@@ -203,6 +215,24 @@ watch(() => playerStore.isPlaying, async (newVal) => {
     align-items: center;
     width: 200px;
     cursor: pointer;
+
+    @media (max-width: 768px) {
+      width: 100%;
+      justify-content: center;
+      img {
+        width: 30px;
+        height: 30px;
+        margin-right: 8px;
+      }
+      .text {
+        .name {
+          font-size: 14px;
+        }
+        .artist {
+          font-size: 12px;
+        }
+      }
+    }
     img {
       width: 50px;
       height: 50px;
@@ -233,6 +263,24 @@ watch(() => playerStore.isPlaying, async (newVal) => {
     align-items: center;
     gap: 15px;
     
+    @media (max-width: 768px) {
+      gap: 10px;
+      .el-button {
+        min-width: 36px;
+        height: 36px;
+        padding: 0;
+        font-size: 16px;
+        &.el-button--large {
+          min-width: 44px;
+          height: 44px;
+          font-size: 20px;
+        }
+      }
+      .playlist-btn {
+        display: none;
+      }
+    }
+
     :deep(.el-button--primary) {
       --el-button-bg-color: var(--theme-primary);
       --el-button-border-color: var(--theme-primary);
@@ -351,6 +399,19 @@ watch(() => playerStore.isPlaying, async (newVal) => {
     color: var(--theme-text-secondary);
     margin: 0 30px;
     
+    @media (max-width: 768px) {
+      width: 90%;
+      margin-left: 0;
+      padding: 0;
+      gap: 5px;
+    }
+
+    span {
+      font-size: 12px;
+      @media (max-width: 768px) {
+        font-size: 10px;
+      }
+    }
     :deep(.el-slider) {
       --el-slider-main-bg-color: var(--theme-primary);
       --el-slider-runway-bg-color: var(--theme-border);

@@ -53,6 +53,10 @@ const mainPaddingBottom = computed(() => {
     max-width: 1200px;
     margin: 0 auto;
     width: 100%;
+
+    @media (max-width: 768px) {
+      padding: 0 10px 130px 10px;
+    }
   }
 
   .app-footer {

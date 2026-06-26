@@ -141,10 +141,20 @@ watch(() => route.params.id, (newId) => {
     padding: 50px 20px;
     color: #fff;
 
+    @media (max-width: 768px) {
+      flex-direction: column;
+      padding: 20px 10px;
+      align-items: center;
+    }
+
     .left {
       flex: 1;
       display: flex;
       justify-content: center;
+
+      @media (max-width: 768px) {
+        display: none; /* Hide disc on mobile */
+      }
       .disc {
         width: 300px;
         height: 300px;

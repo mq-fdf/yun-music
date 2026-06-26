@@ -20,7 +20,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps({
   lyric: {
@@ -34,6 +34,25 @@ const props = defineProps({
 })
 
 const currentLineIndex = ref(-1)
+
+
+// Function to update line height based on screen width
+const updateLyricLineHeight = () => {
+  if (window.innerWidth <= 768) {
+    lyricLineHeight.value = 25 // Mobile line height
+  } else {
+    lyricLineHeight.value = 30 // Desktop line height
+  }
+}
+
+onMounted(() => {
+  updateLyricLineHeight() // Set initial value
+  window.addEventListener('resize', updateLyricLineHeight)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateLyricLineHeight)
+})
 
 const parsedLyrics = computed(() => {
   if (!props.lyric) return []
@@ -60,9 +79,11 @@ const parsedLyrics = computed(() => {
   return result
 })
 
+const lyricLineHeight = ref(30) // Default line height
+
 const offsetY = computed(() => {
   if (currentLineIndex.value <= 0) return 0
-  return -(currentLineIndex.value * 30) 
+  return -(currentLineIndex.value * lyricLineHeight.value)
 })
 
 watch(() => props.currentTime, (time) => {
@@ -84,20 +105,34 @@ watch(() => props.currentTime, (time) => {
   overflow: hidden;
   text-align: center;
   position: relative;
-  
+
+  @media (max-width: 768px) {
+    height: 200px; /* Reduced height for mobile */
+    --lyric-line-height: 25px;
+  }
+
   .lyric-wrapper {
     transition: transform 0.3s ease-out;
     p {
-      height: 30px;
-      line-height: 30px;
+      height: var(--lyric-line-height, 30px); /* Use CSS variable for line height */
+      line-height: var(--lyric-line-height, 30px);
       margin: 0;
       color: rgba(255,255,255,0.6);
       font-size: 14px;
       transition: all 0.3s;
+
+      @media (max-width: 768px) {
+        font-size: 12px;
+      }
+
       &.active {
         color: var(--theme-primary);
         font-size: 16px;
         font-weight: bold;
+
+        @media (max-width: 768px) {
+          font-size: 14px;
+        }
       }
     }
   }
