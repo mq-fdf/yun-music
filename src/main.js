@@ -4,7 +4,6 @@ import App from './App.vue'
 import router from './router'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
-import { ElMessage } from 'element-plus' // 导入 ElMessage
 
 // 移动端检测函数
 const isMobile = () => {
@@ -14,13 +13,17 @@ const isMobile = () => {
 const app = createApp(App)
 const pinia = createPinia()
 
-// 如果是移动端，则直接跳转到移动端提示页面
-if (isMobile()) {
-  router.push('/mobile-warning'); // 跳转到移动端提示页面
-}
-
 app.use(pinia)
 app.use(router)
 app.use(ElementPlus)
 
-app.mount('#app')
+// 在路由准备好之后进行移动端检测和跳转
+router.isReady().then(() => {
+  if (isMobile()) {
+    // 检查当前路由是否已经是 /mobile-warning，防止循环跳转
+    if (router.currentRoute.value.path !== '/mobile-warning') {
+      router.replace('/mobile-warning'); // 使用 replace 避免在历史记录中留下当前页面
+    }
+  }
+  app.mount('#app')
+})
