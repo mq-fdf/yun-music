@@ -13,13 +13,12 @@ export const usePlayerStore = defineStore('player', {
   actions: {
     setCurrentSong(song) {
       this.currentSong = song
-      this.currentTime = 0;    // 重置当前时间
-      this.duration = 0;     // 重置总时长
       this.currentIndex = this.playlist.findIndex(s => s.id === song.id)
       if (this.currentIndex === -1) {
         this.playlist.unshift(song) // 将新点的歌放到列表最前面
         this.currentIndex = 0
       }
+      this.isPlaying = true
     },
     // 播放整个歌单
     playAll(songs) {
@@ -27,6 +26,7 @@ export const usePlayerStore = defineStore('player', {
       this.playlist = [...songs]
       this.currentIndex = 0
       this.currentSong = this.playlist[0]
+      this.isPlaying = true
     },
     // 添加单曲到列表（不立即播放）
     addToPlaylist(song) {
@@ -94,12 +94,28 @@ export const usePlayerStore = defineStore('player', {
     },
     next() {
       if (this.playlist.length === 0) return
-      this.currentIndex = (this.currentIndex + 1) % this.playlist.length
+      if (this.currentIndex === this.playlist.length - 1) {
+        ElMessage({
+          plain: true,
+          message: '已经是最后一首歌了',
+          type: 'warning'
+        });
+        return
+      }
+      this.currentIndex = (this.currentIndex + 1)
       this.currentSong = this.playlist[this.currentIndex]
     },
     prev() {
       if (this.playlist.length === 0) return
-      this.currentIndex = (this.currentIndex - 1 + this.playlist.length) % this.playlist.length
+      if (this.currentIndex === 0) {
+        ElMessage({
+          plain: true,
+          message: '已经是第一首歌了',
+          type: 'warning'
+        });
+        return
+      }
+      this.currentIndex = (this.currentIndex - 1)
       this.currentSong = this.playlist[this.currentIndex]
     }
   }

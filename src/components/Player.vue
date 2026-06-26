@@ -75,16 +75,17 @@
 
     <audio 
       ref="audioRef" 
-      :src="playerStore.currentSong.playUrl"
+      :src="playerStore.currentSong.musicUrl"
       @timeupdate="onTimeUpdate"
       @loadedmetadata="onLoadedMetadata"
       @ended="onEnded"
+      @error="onAudioError"
     ></audio>
   </div>
 </template>
 
 <script setup>
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePlayerStore } from '@/stores/player'
 import { formatTime } from '@/utils/format'
@@ -98,6 +99,13 @@ const isShowList = ref(false)
 const isSeeking = ref(false) // 标记是否正在拖动进度条
 const wasPlayingBeforeSeeking = ref(false) // 记录拖动前是否在播放
 
+// 音频播放错误事件
+const onAudioError = () => {
+  console.error('音频播放错误！');
+  ElMessage.error('音乐播放失败，请检查网络或更换歌曲。');
+  playerStore.setPlaying(false);
+};
+
 // 从播放列表点击歌曲播放
 const playFromList = (song) => {
   playerStore.setCurrentSong(song)
@@ -110,8 +118,19 @@ const delToPlaylist = (songId) => {
 }
 
 // 切换播放/暂停状态
-const togglePlay = () => {
+const togglePlay = async () => {
   playerStore.togglePlay()
+  if (playerStore.isPlaying) {
+    try {
+      await audioRef.value?.play()
+    } catch (error) {
+      console.error('togglePlay: 播放失败', error)
+      ElMessage.error('播放失败，浏览器可能阻止了自动播放。请尝试再次点击或与页面互动。') // 播放失败时弹窗提示
+      playerStore.setPlaying(false) // 播放失败时，将状态设为暂停
+    }
+  } else {
+    audioRef.value?.pause()
+  }
 }
 
 // 音频时间更新事件
@@ -126,6 +145,15 @@ const onTimeUpdate = () => {
 const onLoadedMetadata = async () => {
   if (audioRef.value) {
     playerStore.setDuration(audioRef.value.duration)
+    if (playerStore.isPlaying) {
+      try {
+        await audioRef.value.play()
+      } catch (error) {
+        console.error('onLoadedMetadata: 自动播放失败', error)
+        ElMessage.error('自动播放失败，浏览器可能阻止了自动播放。请尝试手动点击播放。')
+        playerStore.setPlaying(false)
+      }
+    }
   }
 }
 
@@ -150,8 +178,15 @@ const handleSliderChange = async (val) => {
     audioRef.value.currentTime = val // 确保音频时间设置为最终值
     playerStore.setCurrentTime(val) // 更新 Pinia 状态
     if (wasPlayingBeforeSeeking.value) {
-      // 如果拖动前在播放，则尝试恢复播放（通过更新状态触发 watch）
+      // 如果拖动前在播放，则尝试恢复播放
       playerStore.setPlaying(true)
+      try {
+        await audioRef.value?.play()
+      } catch (error) {
+        console.error('handleSliderChange: 拖动后播放失败', error)
+        ElMessage.error('播放失败，浏览器可能阻止了自动播放。') // 弹窗提示
+        playerStore.setPlaying(false) // 播放失败时，将状态设为暂停
+      }
     }
     isSeeking.value = false // 结束拖动
     wasPlayingBeforeSeeking.value = false // 重置状态
@@ -210,21 +245,15 @@ const goToDetail = () => {
 watch(() => playerStore.isPlaying, async (newVal) => {
   if (audioRef.value) {
     if (newVal) {
-      // 在DOM更新后尝试播放，确保audio元素的src已更新
-      // 这里的 nextTick 是为了确保 Vue 已经更新了 DOM
-      // 在移动端，有时 src 更新后立即 play 可能会失败，给它一点时间
-      await nextTick();
       try {
-        await audioRef.value.play();
+        await audioRef.value.play()
       } catch (error) {
-        console.error('watch playerStore.isPlaying: 尝试播放音乐失败', error);
-        if (error.name !== 'AbortError') { // 仅当非 AbortError 时才设置播放状态为暂停
-          ElMessage.error('播放失败，浏览器可能阻止了自动播放。请尝试再次点击播放。');
-          playerStore.setPlaying(false); // 失败后将状态设为暂停
-        }
+        console.error('watch playerStore.isPlaying: 尝试播放音乐失败', error)
+        ElMessage.error('播放失败，浏览器可能阻止了自动播放。请尝试再次点击播放。') // 弹窗提示
+        playerStore.setPlaying(false) // 失败后将状态设为暂停
       }
     } else {
-      audioRef.value.pause();
+      audioRef.value.pause()
     }
   }
 })
@@ -472,10 +501,6 @@ watch(() => playerStore.isPlaying, async (newVal) => {
       --el-slider-main-bg-color: var(--theme-primary);
       --el-slider-runway-bg-color: var(--theme-border);
       --el-slider-stop-bg-color: var(--theme-border);
-
-      .el-slider__button-wrapper {
-        touch-action: pan-x !important; // 允许水平拖拽，阻止浏览器默认的水平滚动行为
-      }
     }
   }
 }

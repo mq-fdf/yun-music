@@ -36,17 +36,17 @@ const props = defineProps({
 const currentLineIndex = ref(-1)
 
 
-// Function to update line height based on screen width
+// 根据屏幕宽度更新行高的函数
 const updateLyricLineHeight = () => {
   if (window.innerWidth <= 768) {
-    lyricLineHeight.value = 25 // Mobile line height
+    lyricLineHeight.value = 25
   } else {
-    lyricLineHeight.value = 30 // Desktop line height
+    lyricLineHeight.value = 30
   }
 }
 
 onMounted(() => {
-  updateLyricLineHeight() // Set initial value
+  updateLyricLineHeight()
   window.addEventListener('resize', updateLyricLineHeight)
 })
 
@@ -79,7 +79,7 @@ const parsedLyrics = computed(() => {
   return result
 })
 
-const lyricLineHeight = ref(30) // Default line height
+const lyricLineHeight = ref(30) 
 
 const offsetY = computed(() => {
   if (currentLineIndex.value <= 0) return 0
