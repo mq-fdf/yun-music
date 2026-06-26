@@ -75,7 +75,7 @@
 
     <audio 
       ref="audioRef" 
-      :src="playerStore.currentSong.musicUrl"
+      :src="playerStore.currentSong.playUrl"
       @timeupdate="onTimeUpdate"
       @loadedmetadata="onLoadedMetadata"
       @ended="onEnded"
@@ -84,7 +84,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePlayerStore } from '@/stores/player'
 import { formatTime } from '@/utils/format'
@@ -228,15 +228,21 @@ const goToDetail = () => {
 watch(() => playerStore.isPlaying, async (newVal) => {
   if (audioRef.value) {
     if (newVal) {
+      // 在DOM更新后尝试播放，确保audio元素的src已更新
+      // 这里的 nextTick 是为了确保 Vue 已经更新了 DOM
+      // 在移动端，有时 src 更新后立即 play 可能会失败，给它一点时间
+      await nextTick();
       try {
-        await audioRef.value.play()
+        await audioRef.value.play();
       } catch (error) {
-        console.error('watch playerStore.isPlaying: 尝试播放音乐失败', error)
-        ElMessage.error('播放失败，浏览器可能阻止了自动播放。请尝试再次点击播放。') // 弹窗提示
-        playerStore.setPlaying(false) // 失败后将状态设为暂停
+        console.error('watch playerStore.isPlaying: 尝试播放音乐失败', error);
+        // 如果是用户点击播放按钮，但浏览器阻止了自动播放，则提示用户
+        // 否则，如果是歌曲切换导致的自动播放失败，静默处理或者给出更柔和的提示
+        ElMessage.error('播放失败，浏览器可能阻止了自动播放。请尝试再次点击播放。');
+        playerStore.setPlaying(false); // 失败后将状态设为暂停
       }
     } else {
-      audioRef.value.pause()
+      audioRef.value.pause();
     }
   }
 })

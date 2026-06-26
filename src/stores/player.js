@@ -13,6 +13,8 @@ export const usePlayerStore = defineStore('player', {
   actions: {
     setCurrentSong(song) {
       this.currentSong = song
+      this.currentTime = 0;    // 重置当前时间
+      this.duration = 0;     // 重置总时长
       this.currentIndex = this.playlist.findIndex(s => s.id === song.id)
       if (this.currentIndex === -1) {
         this.playlist.unshift(song) // 将新点的歌放到列表最前面
