@@ -110,19 +110,8 @@ const delToPlaylist = (songId) => {
 }
 
 // 切换播放/暂停状态
-const togglePlay = async () => {
+const togglePlay = () => {
   playerStore.togglePlay()
-  if (playerStore.isPlaying) {
-    try {
-      await audioRef.value?.play()
-    } catch (error) {
-      console.error('togglePlay: 播放失败', error)
-      ElMessage.error('播放失败，浏览器可能阻止了自动播放。请尝试再次点击或与页面互动。') // 播放失败时弹窗提示
-      playerStore.setPlaying(false) // 播放失败时，将状态设为暂停
-    }
-  } else {
-    audioRef.value?.pause()
-  }
 }
 
 // 音频时间更新事件
@@ -490,6 +479,10 @@ watch(() => playerStore.isPlaying, async (newVal) => {
       --el-slider-main-bg-color: var(--theme-primary);
       --el-slider-runway-bg-color: var(--theme-border);
       --el-slider-stop-bg-color: var(--theme-border);
+
+      .el-slider__button-wrapper {
+        touch-action: pan-x !important; // 允许水平拖拽，阻止浏览器默认的水平滚动行为
+      }
     }
   }
 }
