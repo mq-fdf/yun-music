@@ -150,15 +150,8 @@ const handleSliderChange = async (val) => {
     audioRef.value.currentTime = val // 确保音频时间设置为最终值
     playerStore.setCurrentTime(val) // 更新 Pinia 状态
     if (wasPlayingBeforeSeeking.value) {
-      // 如果拖动前在播放，则尝试恢复播放
+      // 如果拖动前在播放，则尝试恢复播放（通过更新状态触发 watch）
       playerStore.setPlaying(true)
-      try {
-        await audioRef.value?.play()
-      } catch (error) {
-        console.error('handleSliderChange: 拖动后播放失败', error)
-        ElMessage.error('播放失败，浏览器可能阻止了自动播放。') // 弹窗提示
-        playerStore.setPlaying(false) // 播放失败时，将状态设为暂停
-      }
     }
     isSeeking.value = false // 结束拖动
     wasPlayingBeforeSeeking.value = false // 重置状态
@@ -221,6 +214,7 @@ watch(() => playerStore.isPlaying, async (newVal) => {
       // 这里的 nextTick 是为了确保 Vue 已经更新了 DOM
       // 在移动端，有时 src 更新后立即 play 可能会失败，给它一点时间
       await nextTick();
+      try {
         await audioRef.value.play();
       } catch (error) {
         console.error('watch playerStore.isPlaying: 尝试播放音乐失败', error);
@@ -228,7 +222,8 @@ watch(() => playerStore.isPlaying, async (newVal) => {
           ElMessage.error('播放失败，浏览器可能阻止了自动播放。请尝试再次点击播放。');
           playerStore.setPlaying(false); // 失败后将状态设为暂停
         }
-      } else {
+      }
+    } else {
       audioRef.value.pause();
     }
   }
