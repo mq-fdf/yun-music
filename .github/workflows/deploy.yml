@@ -36,6 +36,10 @@ jobs:
         
       - name: Build
         run: npm run build
+        env:
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_APP_ID: ${{ secrets.VITE_APP_ID }}
+          VITE_RSA_PRIVATE_KEY: ${{ secrets.VITE_RSA_PRIVATE_KEY }}
         
       - name: Setup Pages
         uses: actions/configure-pages@v4

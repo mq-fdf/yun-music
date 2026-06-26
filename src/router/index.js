@@ -8,6 +8,11 @@ const routes = [
     meta: { title: '首页' }
   },
   {
+    path: '/index',
+    redirect: '/'
+  },
+
+  {
     path: '/search',
     name: 'Search',
     component: () => import('@/views/Search.vue'),
@@ -25,29 +30,16 @@ const routes = [
     component: () => import('@/views/SongDetail.vue'),
     meta: { title: '歌曲详情' }
   },
+  // 匹配所有未定义的路由，重定向到首页
   {
-    path: '/profile',
-    name: 'Profile',
-    component: () => import('@/views/Profile.vue'),
-    meta: { title: '我的', requiresAuth: true }
+    path: '/:pathMatch(.*)*',
+    redirect: '/'
   }
 ]
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes
-})
-
-router.beforeEach((to, from, next) => {
-  document.title = to.meta.title ? `${to.meta.title} - 云听音乐` : '云听音乐'
-  
-  // Basic auth guard example
-  const isLogin = !!localStorage.getItem('token')
-  if (to.meta.requiresAuth && !isLogin) {
-    next('/')
-  } else {
-    next()
-  }
 })
 
 export default router

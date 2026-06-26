@@ -1,6 +1,7 @@
 <template>
   <div class="lyric-container" ref="containerRef">
     <div 
+      v-if="parsedLyrics.length > 0"
       class="lyric-wrapper"
       :style="{ transform: `translateY(${offsetY}px)` }"
     >
@@ -8,10 +9,12 @@
         v-for="(line, index) in parsedLyrics" 
         :key="index"
         :class="{ active: currentLineIndex === index }"
-        ref="lineRefs"
       >
         {{ line.text }}
       </p>
+    </div>
+    <div v-else class="no-lyric">
+      暂无歌词
     </div>
   </div>
 </template>
@@ -30,23 +33,24 @@ const props = defineProps({
   }
 })
 
-const containerRef = ref(null)
-const lineRefs = ref([])
 const currentLineIndex = ref(-1)
 
 const parsedLyrics = computed(() => {
   if (!props.lyric) return []
   const lines = props.lyric.split('\n')
   const result = []
-  const timeRegex = /\[(\d{2}):(\d{2})\.(\d{2,3})\]/
+  // 更加健壮的正则，支持 [00:00.00] 或 [00:00.000] 格式
+  const timeRegex = /\[(\d{2}):(\d{2})[.:](\d{2,3})\]/
   
   lines.forEach(line => {
     const match = timeRegex.exec(line)
     if (match) {
       const min = parseInt(match[1])
       const sec = parseInt(match[2])
-      const ms = parseInt(match[3])
-      const time = min * 60 + sec + (ms > 99 ? ms / 1000 : ms / 100)
+      const msStr = match[3]
+      const ms = parseInt(msStr)
+      // 根据毫秒位数动态计算偏移（2位除以100，3位除以1000）
+      const time = min * 60 + sec + ms / Math.pow(10, msStr.length)
       const text = line.replace(timeRegex, '').trim()
       if (text) {
         result.push({ time, text })
@@ -58,7 +62,6 @@ const parsedLyrics = computed(() => {
 
 const offsetY = computed(() => {
   if (currentLineIndex.value <= 0) return 0
-  // Simplified offset calculation
   return -(currentLineIndex.value * 30) 
 })
 
@@ -71,6 +74,8 @@ watch(() => props.currentTime, (time) => {
     currentLineIndex.value = index
   }
 })
+
+
 </script>
 
 <style lang="scss" scoped>
@@ -86,14 +91,24 @@ watch(() => props.currentTime, (time) => {
       height: 30px;
       line-height: 30px;
       margin: 0;
-      color: #666;
+      color: rgba(255,255,255,0.6);
       font-size: 14px;
+      transition: all 0.3s;
       &.active {
-        color: #c20c0c;
+        color: var(--theme-primary);
         font-size: 16px;
         font-weight: bold;
       }
     }
+  }
+
+  .no-lyric {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: rgba(255,255,255,0.5);
+    font-size: 16px;
   }
 }
 </style>

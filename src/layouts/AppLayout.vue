@@ -15,12 +15,23 @@
     <footer class="app-footer">
       <Player />
     </footer>
+
   </div>
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import NavBar from '@/components/NavBar.vue'
 import Player from '@/components/Player.vue'
+import { usePlayerStore } from '@/stores/player'
+import { useRouter } from 'vue-router'
+
+const playerStore = usePlayerStore()
+const router = useRouter() // 使用 router
+
+const mainPaddingBottom = computed(() => {
+  return playerStore.isCollapsed ? '40px' : '80px'
+})
 </script>
 
 <style lang="scss" scoped>
@@ -28,7 +39,7 @@ import Player from '@/components/Player.vue'
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background-color: var(--theme-bg);
 
   .app-header {
     position: sticky;
@@ -38,7 +49,7 @@ import Player from '@/components/Player.vue'
 
   .app-main {
     flex: 1;
-    padding-bottom: 80px; // Space for player
+    padding-bottom: v-bind(mainPaddingBottom); // Dynamically set padding
     max-width: 1200px;
     margin: 0 auto;
     width: 100%;

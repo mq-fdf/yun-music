@@ -1,33 +1,80 @@
 <template>
   <div class="player" v-if="playerStore.currentSong">
-    <div class="song-info" @click="goToDetail">
-      <img :src="playerStore.currentSong.al?.picUrl" alt="cover" />
-      <div class="text">
-        <div class="name">{{ playerStore.currentSong.name }}</div>
-        <div class="artist">{{ playerStore.currentSong.ar?.[0]?.name }}</div>
+    
+    <div class="player-content">
+      <div class="song-info" @click="goToDetail">
+        <img :src="playerStore.currentSong.coverImgUrl" alt="cover" />
+        <div class="text">
+          <div class="name">{{ playerStore.currentSong.name }}</div>
+          <div class="artist">{{ playerStore.currentSong?.artist }}</div>
+        </div>
       </div>
-    </div>
 
-    <div class="controls">
-      <button @click="prev">Prev</button>
-      <button @click="togglePlay">{{ playerStore.isPlaying ? 'Pause' : 'Play' }}</button>
-      <button @click="next">Next</button>
-    </div>
+      <div class="controls">
+        <el-button circle @click="prev"><el-icon><ArrowLeft /></el-icon></el-button>
+        <el-button circle type="primary" size="large" @click="togglePlay">
+          <el-icon v-if="playerStore.isPlaying"><VideoPause /></el-icon>
+          <el-icon v-else><VideoPlay /></el-icon>
+        </el-button>
+        <el-button circle @click="next"><el-icon><ArrowRight /></el-icon></el-button>
+        <el-button type="primary" class="playlist-btn" @click="isShowList = true">播放列表</el-button>
+      </div>
 
-    <div class="progress-bar">
-      <span>{{ formatTime(playerStore.currentTime) }}</span>
-      <input 
-        type="range" 
-        :value="playerStore.currentTime" 
-        :max="playerStore.duration" 
-        @input="onSeek"
-      />
-      <span>{{ formatTime(playerStore.duration) }}</span>
+      <!-- 播放列表抽屉 -->
+      <el-drawer
+        v-model="isShowList"
+        title="当前播放"
+        direction="rtl"
+        size="350px"
+        custom-class="player-drawer"
+      >
+        <template #header>
+          <div class="drawer-header">
+            <span>当前播放 ({{ playerStore.playlist.length }})</span>
+          </div>
+        </template>
+        <div class="list">
+          <div 
+            v-for="(song, index) in playerStore.playlist" 
+            :key="song.id"
+            class="item"
+            :class="{ active: playerStore.currentSong?.id === song.id }"
+            @click="playFromList(song)"
+          >
+            <div class="song-info-left">
+              <div class="song-name-wrap">
+                <span class="name">{{ song.name }}</span>
+              </div>
+              <span class="artist">- {{ song.artist }}</span>
+            </div>
+            <el-button 
+              class="delPlayList"
+              link 
+              type="danger" 
+              title="移除歌曲"
+              @click.stop="delToPlaylist(song.id)"
+            >
+              <el-icon><Delete /></el-icon>
+            </el-button>
+          </div>
+        </div>
+      </el-drawer>
+
+      <div class="progress-bar">
+        <span>{{ formatTime(playerStore.currentTime) }}</span>
+        <el-slider 
+          :model-value="playerStore.currentTime" 
+          :max="playerStore.duration" 
+          :show-tooltip="false"
+          @input="onSeekSlider"
+        />
+        <span>{{ formatTime(playerStore.duration) }}</span>
+      </div>
     </div>
 
     <audio 
       ref="audioRef" 
-      :src="songUrl"
+      :src="playerStore.currentSong.musicUrl"
       @timeupdate="onTimeUpdate"
       @loadedmetadata="onLoadedMetadata"
       @ended="onEnded"
@@ -36,29 +83,27 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePlayerStore } from '@/stores/player'
 import { formatTime } from '@/utils/format'
+import { VideoPlay, VideoPause, ArrowLeft, ArrowRight, Delete } from '@element-plus/icons-vue'
 
 const playerStore = usePlayerStore()
 const router = useRouter()
 const audioRef = ref(null)
+const isShowList = ref(false)
 
-// Mock audio URL - 使用公共可用的示例音频
-const songUrl = computed(() => {
-  const songId = playerStore.currentSong?.id || 1001
-  const sampleTracks = [
-    'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-    'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
-    'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
-    'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
-    'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3'
-  ]
-  return sampleTracks[songId % sampleTracks.length]
-})
+const playFromList = (song) => {
+  playerStore.setCurrentSong(song)
+  playerStore.setPlaying(true)
+}
 
-const togglePlay = () => {
+const delToPlaylist = (songId) => {
+  playerStore.removeFromPlaylist(songId)
+}
+
+const togglePlay = async () => {
   playerStore.togglePlay()
   if (playerStore.isPlaying) {
     audioRef.value?.play()
@@ -73,71 +118,85 @@ const onTimeUpdate = () => {
   }
 }
 
-const onLoadedMetadata = () => {
+const onLoadedMetadata = async () => {
   if (audioRef.value) {
     playerStore.setDuration(audioRef.value.duration)
     if (playerStore.isPlaying) {
-      audioRef.value.play()
+      try {
+        await audioRef.value.play()
+      } catch (error) {
+        console.error('尝试播放音乐失败:', error)
+        playerStore.currentSong.musicUrl = '/audio/' + playerStore.currentSong.name + '.mp3'
+      }
     }
   }
 }
 
-const onSeek = (e) => {
+const onSeekSlider = (val) => {
   if (audioRef.value) {
-    const time = parseFloat(e.target.value)
-    audioRef.value.currentTime = time
-    playerStore.setCurrentTime(time)
+    audioRef.value.currentTime = val
+    playerStore.setCurrentTime(val)
   }
 }
 
 const prev = () => {
-  const currentIndex = playerStore.currentIndex
-  const newIndex = currentIndex > 0 ? currentIndex - 1 : playerStore.playlist.length - 1
-  if (playerStore.playlist.length > 0) {
-    playerStore.setCurrentSong(playerStore.playlist[newIndex])
-    playerStore.setCurrentTime(0)
-  }
+  playerStore.prev()
+  playerStore.setCurrentTime(0)
 }
 
 const next = () => {
-  const currentIndex = playerStore.currentIndex
-  const newIndex = (currentIndex + 1) % playerStore.playlist.length
-  if (playerStore.playlist.length > 0) {
-    playerStore.setCurrentSong(playerStore.playlist[newIndex])
-    playerStore.setCurrentTime(0)
-  }
+  playerStore.next()
+  playerStore.setCurrentTime(0)
 }
 
 const onEnded = () => {
-  next()
+  playerStore.next()
+  playerStore.setCurrentTime(0)
 }
 
 const goToDetail = () => {
   router.push(`/song/${playerStore.currentSong.id}`)
 }
 
-watch(() => playerStore.isPlaying, (newVal) => {
+watch(() => playerStore.isPlaying, async (newVal) => {
   if (audioRef.value) {
-    newVal ? audioRef.value.play() : audioRef.value.pause()
-  }
-})
-
-watch(() => playerStore.currentSong?.id, () => {
-  if (audioRef.value && playerStore.isPlaying) {
-    audioRef.value.play()
+    if (newVal) {
+      try {
+        await audioRef.value.play()
+      } catch (error) {
+        console.error('尝试播放音乐失败:', error)
+        playerStore.currentSong.musicUrl = '/audio/' + playerStore.currentSong.name + '.mp3'
+      }
+    } else {
+      audioRef.value.pause()
+    }
   }
 })
 </script>
 
 <style lang="scss" scoped>
 .player {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
   height: 70px;
-  background-color: #fff;
-  border-top: 1px solid #ddd;
+  background-color: var(--theme-bg);
+  border-top: 1px solid var(--theme-border);
   display: flex;
   align-items: center;
   padding: 0 20px;
   box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+  transition: all 0.3s;
+  z-index: 100;
+  color: var(--theme-text);
+
+  .player-content {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+  }
 
   .song-info {
     display: flex;
@@ -157,10 +216,12 @@ watch(() => playerStore.currentSong?.id, () => {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        color: var(--theme-text);
+        margin-bottom: 4px;
       }
       .artist {
         font-size: 12px;
-        color: #888;
+        color: var(--theme-text-secondary);
       }
     }
   }
@@ -169,21 +230,131 @@ watch(() => playerStore.currentSong?.id, () => {
     flex: 1;
     display: flex;
     justify-content: center;
-    gap: 20px;
-    button {
-      padding: 5px 15px;
-      cursor: pointer;
+    align-items: center;
+    gap: 15px;
+    
+    :deep(.el-button--primary) {
+      --el-button-bg-color: var(--theme-primary);
+      --el-button-border-color: var(--theme-primary);
+      --el-button-text-color: #fff !important;
+      --el-button-hover-bg-color: color-mix(in srgb, var(--theme-primary), white 15%);
+      --el-button-hover-border-color: color-mix(in srgb, var(--theme-primary), white 15%);
+      --el-button-hover-text-color: #fff !important;
+      --el-button-active-bg-color: color-mix(in srgb, var(--theme-primary), black 10%);
+      --el-button-active-border-color: color-mix(in srgb, var(--theme-primary), black 10%);
+      --el-button-active-text-color: #fff !important;
+    }
+    
+    :deep(.el-button:not(.el-button--primary)) {
+      --el-button-bg-color: transparent;
+      --el-button-border-color: var(--theme-border);
+      --el-button-text-color: var(--theme-text);
+      --el-button-hover-bg-color: rgba(var(--theme-primary-rgb, 194, 12, 12), 0.1);
+      --el-button-hover-border-color: var(--theme-primary);
+      --el-button-hover-text-color: var(--theme-primary);
+    }
+    
+    :deep(.el-button .el-icon) {
+      color: inherit;
+    }
+    
+    .playlist-btn {
+      margin-left: 10px;
+    }
+  }
+
+  :deep(.el-drawer) {
+    background-color: var(--theme-bg);
+    color: var(--theme-text);
+    border-left: 1px solid var(--theme-border);
+    
+    .el-drawer__header {
+      margin-bottom: 0;
+      padding: 15px;
+      border-bottom: 1px solid var(--theme-border);
+      color: var(--theme-text);
+      font-weight: bold;
+    }
+    
+    .el-drawer__body {
+      padding: 0;
+    }
+  }
+
+  .list {
+    flex: 1;
+    overflow-y: auto;
+    .item {
+        padding: 12px 15px;
+        border-bottom: 1px solid var(--theme-border);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between; /* Added to push button to the right */
+        font-size: 14px;
+        transition: background-color 0.2s;
+        
+        &:hover {
+          background-color: rgba(0, 0, 0, 0.05);
+        }
+        &.active {
+          color: var(--theme-primary);
+          background-color: rgba(var(--theme-primary-rgb, 194, 12, 12), 0.05);
+        }
+        
+        .song-info-left {
+          display: flex;
+          align-items: center;
+          flex-grow: 1;
+          overflow: hidden;
+        }
+        
+        .song-name-wrap {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        max-width: 220px;
+        overflow: hidden;
+        .name {
+          max-width: 160px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .mini-tag {
+          font-weight: 500;
+          font-size: 10px;
+          line-height: 1.3;
+        }
+      }
+      .artist {
+        font-size: 12px;
+        color: var(--theme-text-secondary);
+        margin-left: 8px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .delPlayList {
+        flex-shrink: 0;
+        margin-left: 10px;
+      }
     }
   }
 
   .progress-bar {
+    flex: 1;
     display: flex;
     align-items: center;
-    gap: 10px;
-    width: 300px;
+    gap: 15px;
     font-size: 12px;
-    input {
-      flex: 1;
+    color: var(--theme-text-secondary);
+    margin: 0 30px;
+    
+    :deep(.el-slider) {
+      --el-slider-main-bg-color: var(--theme-primary);
+      --el-slider-runway-bg-color: var(--theme-border);
+      --el-slider-stop-bg-color: var(--theme-border);
     }
   }
 }

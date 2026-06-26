@@ -1,24 +1,31 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
-import { viteMockServe } from 'vite-plugin-mock'
+import { nodePolyfills } from 'vite-plugin-node-polyfills'
 
-// https://vite.dev/config/
+
 export default defineConfig(({ command }) => {
   return {
     plugins: [
       vue(),
-      viteMockServe({
-        enable: true, // 始终开启 mock
-        mockPath: 'mock',
-      })
+      nodePolyfills({
+        include: ['crypto', 'buffer'],
+        globals: {
+          Buffer: true,
+          global: true,
+          process: true,
+        },
+        protocolImports: true,
+      }),
     ],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
       },
     },
-    // GitHub Pages 部署配置
-    base: '/yun-music/',
+    // 开发环境使用 '/'，生产环境使用 '/yun-music/' (用于 GitHub Pages)
+    base: command === 'build' ? '/yun-music/' : '/',
+    server: {
+    }
   }
 })
